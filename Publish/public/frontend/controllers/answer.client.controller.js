@@ -13,15 +13,16 @@
         .module('ChatBotApp')
         .controller('AnswerController', AnswerController);
 
-    AnswerController.$inject = ['$scope', 'AnswerService'];
+    AnswerController.$inject = ['$scope', 'localStorageService', 'AnswerService'];
 
-    function AnswerController($scope, AnswerService) {
+    function AnswerController($scope, localStorageService, AnswerService) {
         $scope.AnswerFormSubmmit = false;
         $scope.AnswerFormFormValid = false;
         $scope.HideAnswerBtn = false;
         $scope.ShowLoading = false;
+
         $scope.AnswerData = {
-            UserAnswer: localStorage.getItem('currentUser'),
+            UserAnswer: localStorageService.cookie.get('currentUser'),
             Content: '',
             CreateDate: new Date().toLocaleDateString()
         };
@@ -32,21 +33,22 @@
 
         $scope.PostAnswer = function () {
             $scope.AnswerFormSubmmit = true;
-            if (localStorage.getItem('currentUser') === null) {
-                bootbox.alert("Vui lòng đăng nhập để trả lời");
+            if (localStorageService.cookie.get('currentUser') === null) {
+                toastr.warning("Vui lòng đăng nhập để trả lời");
                 return false;
             }
-
-            if ($scope.AnswerFormSubmmit) {
+            if ($scope.AnswerFormFormValid) {
                 $scope.ShowLoading = true;
                 $scope.HideAnswerBtn = true;
-                AnswerService.PostAnswer($scope.AnswerData).then(function (result) {
+                var id = $('#QuestionId').val();
+                AnswerService.PostAnswer($scope.AnswerData, id).then(function (result) {
                     $scope.HideAnswerBtn = false;
                     $scope.ShowLoading = false;
-                    console.log(result);
-                    if (result.data.success) {
-                        bootbox.alert("Đăng Câu Trả Lời Thành Công");
-                        return false;
+                    if (!result.data.success) {
+                        bootbox.alert(result.data.msg);
+                    }
+                    else {
+                        toastr.warning("Đăng Câu Trả Lời Thành Công");
                     }
                 });
             }

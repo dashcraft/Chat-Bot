@@ -12,59 +12,28 @@
 
     angular.module('ChatBotApp')
         .controller('FacebookController', FacebookController);
-    FacebookController.$inject = ['$scope'];
+    FacebookController.$inject = ['$scope', 'localStorageService', '$rootScope', '$location'];
 
-    function FacebookController($scope) {
-        $scope.isFacebookLogin = false;
+    function FacebookController($scope, localStorageService, $rootScope, $location) {
+        $rootScope.IsFacebookLogin = false;
         $scope.facebookLogin = function () {
-            FB.login(function (response) {
-                if (response.authResponse) {
-                    FB.api('/me', function (response) {
-                        $scope.isFacebookLogin = true;
-                        $scope.welcomeMsg = 'Xin chào ' + response.name;
-                        FB.api(response.id + '/picture', function (response) {
-                            $scope.profileImg = response.data.url;
-                            refresh();
-                        });
-                    });
-                }
-            });
-
-        };
-
-        $scope.facebookLogout = function () {
-
+            refresh();
+            $rootScope.IsFacebookLogin = true;
+            $rootScope.HideLoginSection = true;
+            $rootScope.IsLogin = false;
+            /*window.location.reload();*/
+            $location.path('/');
         };
 
         function refresh() {
-            FB.api('/me', function (response) {
-                $scope.isFacebookLogin = true;
-                $scope.welcomeMsg = 'Xin chào ' + response.name;
-                FB.api(response.id + '/picture', function (response) {
-                    $scope.profileImg = response.data.url;
-                });
+            FB.login(function (response) {
+                if (response.authResponse) {
+                    FB.api('/me', function (response) {
+                        localStorageService.cookie.set('facebookUser', response.name, 1);
+                        $rootScope.facebookUser = response.name;
+                    });
+                }
             });
         }
     }
-
-
-    window.fbAsyncInit = function () {
-        FB.init({
-            appId: '629213847266342',
-            xfbml: true,
-            version: 'v2.8'
-        });
-    };
-
-    (function (d, s, id) {
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) {
-            return;
-        }
-        js = d.createElement(s);
-        js.id = id;
-        js.src = "//connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
-
 })();
